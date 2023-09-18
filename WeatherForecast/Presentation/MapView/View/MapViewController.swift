@@ -178,11 +178,7 @@ class MapViewController: UIViewController {
         if segue.identifier == "pushWeatherDetailScreen" {
             if let destinationVC = segue.destination as? DetailWeatherController {
                 // Pass the locationName to the DetailWeatherViewController
-                if((self.placeView.text?.isEmpty) == true) {
-                    destinationVC.location = "Hanoi"
-                } else {
-                    destinationVC.location = placeView.text!
-                }
+                destinationVC.location = self.weatherLocation!.name
             }
         }
     }
