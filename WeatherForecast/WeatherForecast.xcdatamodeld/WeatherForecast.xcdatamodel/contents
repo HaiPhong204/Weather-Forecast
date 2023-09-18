@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="21754" systemVersion="22G90" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="CityCD" representedClassName="CityCD" syncable="YES">
+        <attribute name="country" optional="YES" attributeType="String"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <relationship name="list" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ForecastCD" inverseName="city" inverseEntity="ForecastCD"/>
+    </entity>
+    <entity name="CloudsCD" representedClassName="CloudsCD" syncable="YES">
+        <attribute name="all" optional="YES" attributeType="Integer 32" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="toWeatherInfomation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherInfomationCD" inverseName="clouds" inverseEntity="WeatherInfomationCD"/>
+        <relationship name="toWeatherLocation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherLocationCD" inverseName="clouds" inverseEntity="WeatherLocationCD"/>
+    </entity>
+    <entity name="CoordinateCD" representedClassName="CoordinateCD" syncable="YES">
+        <attribute name="lat" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="lon" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="toWeatherLocation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherLocationCD" inverseName="coord" inverseEntity="WeatherLocationCD"/>
+    </entity>
+    <entity name="ForecastCD" representedClassName="ForecastCD" syncable="YES">
+        <relationship name="city" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CityCD" inverseName="list" inverseEntity="CityCD"/>
+        <relationship name="list" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WeatherInfomationCD" inverseName="toForecast" inverseEntity="WeatherInfomationCD"/>
+    </entity>
+    <entity name="SystemCD" representedClassName="SystemCD" syncable="YES">
+        <attribute name="country" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="sunrise" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="sunset" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="type" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="toWeatherLocation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherLocationCD" inverseName="sys" inverseEntity="WeatherLocationCD"/>
+    </entity>
+    <entity name="WeatherCD" representedClassName="WeatherCD" syncable="YES">
+        <attribute name="descriptions" optional="YES" attributeType="String"/>
+        <attribute name="icon" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="main" optional="YES" attributeType="String"/>
+        <relationship name="toWeatherInfomation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherInfomationCD" inverseName="weather" inverseEntity="WeatherInfomationCD"/>
+        <relationship name="toWeatherLocation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherLocationCD" inverseName="weather" inverseEntity="WeatherLocationCD"/>
+    </entity>
+    <entity name="WeatherInfomationCD" representedClassName="WeatherInfomationCD" syncable="YES">
+        <attribute name="dt" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="dt_txt" optional="YES" attributeType="String"/>
+        <attribute name="pop" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="visibility" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="clouds" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CloudsCD" inverseName="toWeatherInfomation" inverseEntity="CloudsCD"/>
+        <relationship name="main" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherMainCD" inverseName="toWeatherInfomation" inverseEntity="WeatherMainCD"/>
+        <relationship name="toForecast" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ForecastCD" inverseName="list" inverseEntity="ForecastCD"/>
+        <relationship name="weather" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WeatherCD" inverseName="toWeatherInfomation" inverseEntity="WeatherCD"/>
+        <relationship name="wind" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WindCD" inverseName="toWeatherInfomation" inverseEntity="WindCD"/>
+    </entity>
+    <entity name="WeatherLocationCD" representedClassName="WeatherLocationCD" syncable="YES">
+        <attribute name="base" optional="YES" attributeType="String"/>
+        <attribute name="cod" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="dt" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="timezone" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="visibility" optional="YES" attributeType="Integer 32" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="clouds" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CloudsCD" inverseName="toWeatherLocation" inverseEntity="CloudsCD"/>
+        <relationship name="coord" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CoordinateCD" inverseName="toWeatherLocation" inverseEntity="CoordinateCD"/>
+        <relationship name="main" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherMainCD" inverseName="toWeatherLocation" inverseEntity="WeatherMainCD"/>
+        <relationship name="sys" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SystemCD" inverseName="toWeatherLocation" inverseEntity="SystemCD"/>
+        <relationship name="weather" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WeatherCD" inverseName="toWeatherLocation" inverseEntity="WeatherCD"/>
+        <relationship name="wind" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WindWeatherCD" inverseName="toWeatherLocation" inverseEntity="WindWeatherCD"/>
+    </entity>
+    <entity name="WeatherMainCD" representedClassName="WeatherMainCD" syncable="YES">
+        <attribute name="feels_like" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="humidity" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="pressure" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="temp" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="temp_max" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="temp_min" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="toWeatherInfomation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherInfomationCD" inverseName="main" inverseEntity="WeatherInfomationCD"/>
+        <relationship name="toWeatherLocation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherLocationCD" inverseName="main" inverseEntity="WeatherLocationCD"/>
+    </entity>
+    <entity name="WindCD" representedClassName="WindCD" syncable="YES">
+        <attribute name="deg" optional="YES" attributeType="Integer 32" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="gust" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="speed" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="toWeatherInfomation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherInfomationCD" inverseName="wind" inverseEntity="WeatherInfomationCD"/>
+    </entity>
+    <entity name="WindWeatherCD" representedClassName="WindWeatherCD" syncable="YES">
+        <attribute name="deg" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="speed" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="toWeatherLocation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherLocationCD" inverseName="wind" inverseEntity="WeatherLocationCD"/>
+    </entity>
+</model>
