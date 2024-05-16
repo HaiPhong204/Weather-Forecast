@@ -9,7 +9,7 @@ import UIKit
 import Reachability
 import MapKit
 
-class MapViewController: UIViewController {
+final class MapViewController: UIViewController, StoryboardInstantiable, Alertable {
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var placeView: UITextField!
     @IBOutlet weak var dateView: UILabel!
@@ -23,15 +23,23 @@ class MapViewController: UIViewController {
     
     var isInternetAvailable = true
     let reachability = try! Reachability()
-    var mapViewModel = MapViewModel()
-    var weatherLocation : WeatherLocationModel? = nil
+//    var mapViewModel = MapViewModel()
+    private var mapViewModel: MapViewModel!
     var currentAnnotation: MKPointAnnotation?
     
-    private let _weatherLocationRepository = WeatherLocationRepository()
+//    private let _weatherLocationRepository = WeatherLocationRepository()
+    
+    static func create(
+        with viewModel: MapViewModel) -> MapViewController {
+            let view = MapViewController.instantiateViewController()
+            view.mapViewModel = viewModel
+            return view
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
+        bind(to: mapViewModel)
         let tapSearchGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTapGestureRecognizer(_:)))
         let tapweatherInfomationView = UITapGestureRecognizer(target: self, action: #selector(weatherInforTapped))
         spinnerView.startAnimating()
@@ -40,62 +48,87 @@ class MapViewController: UIViewController {
         weatherInfomationView.addGestureRecognizer(tapweatherInfomationView)
     }
     
+    private func bind(to viewModel: MapViewModel) {
+        viewModel.query.observe(on: self) { [weak self] in self?.updateSearchQuery($0) }
+        viewModel.error.observe(on: self) { [weak self] in self?.showError($0) }
+    }
+    
     @objc func handleTapGestureRecognizer(_ sender: UITapGestureRecognizer) {
         placeView.resignFirstResponder()
     }
     
+    private func updateSearchQuery(_ query: String) {
+        placeView.text? = query
+    }
+
+    private func showError(_ error: String) {
+        guard !error.isEmpty else { return }
+        showAlert(title: mapViewModel.errorTitle, message: error)
+    }
+    
     @IBAction func searchButton(_ sender: Any) {
         if ((self.placeView.text?.isEmpty) == true) {
-            let alertController = UIAlertController(title: "Location not found!", message: "Please enter location again!", preferredStyle: .alert)
-            let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
-            alertController.addAction(okAction)
-            self.present(alertController, animated: true, completion: nil)
+            showAlert(title: "Location not found!", message: "Please enter location again!")
             return
         } else {
             Task {
                 spinnerView.isHidden = false
                 spinnerView.startAnimating()
-                self.weatherLocation = await self.mapViewModel.getWeatherData(city: placeView.text!)
+                await self.mapViewModel.didSearch(query: placeView.text!)
                 spinnerView.stopAnimating()
                 spinnerView.isHidden = true
-                if(self.weatherLocation == nil) {
+                if(self.mapViewModel.weatherLocation == nil) {
                     let alertController = UIAlertController(title: "Location not found!", message: "Please enter location again!", preferredStyle: .alert)
                     let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
                     alertController.addAction(okAction)
                     self.present(alertController, animated: true, completion: nil)
                     return
                 }
-                _weatherLocationRepository.deleteAllData()
-                _weatherLocationRepository.create(record: self.weatherLocation!)
-                self.setupData(place: self.weatherLocation!.name)
+//                _weatherLocationRepository.deleteAllData()
+//                _weatherLocationRepository.create(record: self.mapViewModel.weatherLocation!)
+                self.setupData(place: self.mapViewModel.weatherLocation!.name)
             }
         }
     }
     
     func checkMonitoringReachability() {
-
         reachability.whenReachable = { [self] reachability in
             self.isInternetAvailable = true
-            if reachability.connection == .wifi {
+            if reachability.connection == .wifi || reachability.connection == .cellular {
                 Task {
-                    self.weatherLocation = await self.mapViewModel.getWeatherData(city: "hanoi")
-                    _weatherLocationRepository.deleteAllData()
-                    _weatherLocationRepository.create(record: self.weatherLocation!)
-                    spinnerView.stopAnimating()
-                    spinnerView.isHidden = true
-                    self.setupData(place: self.weatherLocation!.name)
-                }
-            } else if reachability.connection == .cellular {
-                Task {
-                    self.weatherLocation = await self.mapViewModel.getWeatherData(city: "hanoi")
-                    _weatherLocationRepository.deleteAllData()
-                    _weatherLocationRepository.create(record: self.weatherLocation!)
-                    spinnerView.stopAnimating()
-                    spinnerView.isHidden = true
-                    self.setupData(place: self.weatherLocation!.name)
+                    await self.mapViewModel.didSearch(query: "hanoi")
+                    print("eee")
+//                    _weatherLocationRepository.deleteAllData()
+//                    _weatherLocationRepository.create(record: self.mapViewModel.weatherLocation!)
+                    self.spinnerView.stopAnimating()
+                    self.spinnerView.isHidden = true
+                    self.setupData(place: self.mapViewModel.weatherLocation!.name)
                 }
             }
         }
+        
+//        reachability.whenReachable = { [self] reachability in
+//            self.isInternetAvailable = true
+//            if reachability.connection == .wifi {
+//                Task {
+//                    self.weatherLocation = await self.mapViewModel.getWeatherData(city: "hanoi")
+//                    _weatherLocationRepository.deleteAllData()
+//                    _weatherLocationRepository.create(record: self.weatherLocation!)
+//                    spinnerView.stopAnimating()
+//                    spinnerView.isHidden = true
+//                    self.setupData(place: self.weatherLocation!.name)
+//                }
+//            } else if reachability.connection == .cellular {
+//                Task {
+//                    self.weatherLocation = await self.mapViewModel.getWeatherData(city: "hanoi")
+//                    _weatherLocationRepository.deleteAllData()
+//                    _weatherLocationRepository.create(record: self.weatherLocation!)
+//                    spinnerView.stopAnimating()
+//                    spinnerView.isHidden = true
+//                    self.setupData(place: self.weatherLocation!.name)
+//                }
+//            }
+//        }
         
         reachability.whenUnreachable = { _ in
             self.isInternetAvailable = false
@@ -124,14 +157,14 @@ class MapViewController: UIViewController {
     }
     
     func setupOldData() {
-        self.weatherLocation = _weatherLocationRepository.getWeatherLocation()
+//        self.mapViewModel.weatherLocation = _weatherLocationRepository.getWeatherLocation()
         spinnerView.stopAnimating()
         spinnerView.isHidden = true
-        setupData(place: self.weatherLocation!.name)
+        setupData(place: self.mapViewModel.weatherLocation!.name)
     }
     
     func setupData(place: String) {
-        if weatherLocation == nil { return }
+        if self.mapViewModel.weatherLocation == nil { return }
         DispatchQueue.main.async {
             
             if let annotation = self.currentAnnotation {
@@ -139,7 +172,7 @@ class MapViewController: UIViewController {
             }
             
             // Set location
-            let initialLocation = CLLocation(latitude: self.weatherLocation!.coord.lat, longitude: self.weatherLocation!.coord.lon)
+            let initialLocation = CLLocation(latitude: self.mapViewModel.weatherLocation!.coord.lat, longitude: self.mapViewModel.weatherLocation!.coord.lon)
             let regionRadius: CLLocationDistance = 25000
             self.centerMapOnLocation(location: initialLocation, radius: regionRadius)
             
@@ -153,20 +186,20 @@ class MapViewController: UIViewController {
             
             // Load image from URL
             Task {
-                let image = await self.mapViewModel.getIconImage(icon: self.weatherLocation!.weather.first!.icon)
+                let image = await self.mapViewModel.getIconImage(icon: self.mapViewModel.weatherLocation!.weather.first!.icon)
                 self.imageView.image = image
             }
             // Load currentday
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
-            self.dateView.text = "\(self.weatherLocation!.name), \(self.weatherLocation!.sys.country) " + dateFormatter.string(from: Date())
+            self.dateView.text = "\(self.mapViewModel.weatherLocation!.name), \(self.mapViewModel.weatherLocation!.sys.country) " + dateFormatter.string(from: Date())
             // Load weather data
-            self.overviewLabel.text = self.weatherLocation?.weather[0].description
-            let tp_max = "H: \(self.weatherLocation?.main.temp_max ?? 0)"
-            let tp_min = "L: \(self.weatherLocation?.main.temp_min ?? 0)"
+            self.overviewLabel.text = self.mapViewModel.weatherLocation?.weather[0].description
+            let tp_max = "H: \(self.mapViewModel.weatherLocation?.main.temp_max ?? 0)"
+            let tp_min = "L: \(self.mapViewModel.weatherLocation?.main.temp_min ?? 0)"
             self.temperatureLabel.text = tp_max + " " + tp_min
-            self.cloudLabel.text = "☁️ \(self.weatherLocation?.clouds.all ?? 0)%"
-            self.humidityLabel.text = "Humidity: \(self.weatherLocation?.main.humidity ?? 0)%"
+            self.cloudLabel.text = "☁️ \(self.mapViewModel.weatherLocation?.clouds.all ?? 0)%"
+            self.humidityLabel.text = "Humidity: \(self.mapViewModel.weatherLocation?.main.humidity ?? 0)%"
         }
     }
     
@@ -178,7 +211,7 @@ class MapViewController: UIViewController {
         if segue.identifier == "pushWeatherDetailScreen" {
             if let destinationVC = segue.destination as? DetailWeatherController {
                 // Pass the locationName to the DetailWeatherViewController
-                destinationVC.location = self.weatherLocation!.name
+                destinationVC.location = self.mapViewModel.weatherLocation!.name
             }
         }
     }
